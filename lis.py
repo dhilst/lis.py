@@ -101,11 +101,6 @@ def eval_(inp, env):
         while type(op) is list:
             op = eval_(op, env)
 
-        # if op is None:
-        #     if args:
-        #         return eval_(args, env)
-        #     else:
-        #         return None
         # then we call apply, op is our function, args
         # are the arguemnts and env is the environment
         # holding variables stuff
