@@ -53,4 +53,5 @@ If you redirect the input to `lis.py` it will interpret the whole thing as a sin
 
 # Examples
 
-You can check the `test.lispy` file for examples.
+You can check the `test.lispy` file for examples. You can the example
+by `python3 lis.py < test.lispy`
