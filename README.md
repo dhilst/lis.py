@@ -27,6 +27,8 @@ The basic constructs of the language
 * `! &` bitwise operators
 * `let!`, this is in fact a macro `(let! (x 1) (+ x 1))` expands to `((lambda (x) (+ x 1)) 1)`
 * `(assert x)` : calls `assert x` in Python.
+* `(ignore *args)` : Returns `nil` and don't evaluate the arguments. Use it for commenting code.
+* `(prog *args)` : Evaluate all the arguments and return the last one. Note that `((foo x) (bar y))` means _Execute `(foo x)`, then apply it's result to `(bar y)`_. If you need _Execute `(foo x)`, ignore it's result and then execute `(bar y)`_ then you need to write `(prog (foo x) (bar y))`.
 
 # REPL
 
@@ -38,5 +40,17 @@ If you redirect the input to `lis.py` it will interpret the whole thing as a sin
 
 # Motivation
 
-I want something easy to tweak to pratice lambda calculus, so this is why we don't have anything other data type beside lambdas, you have to use lambdas to construct otherstuff :), this is functional programming in it's essence.
+1. I want something easy to tweak to pratice lambda calculus, so this
+   is why we don't have anything other data type beside lambdas, you
+   have to use lambdas to construct otherstuff :), this is functional
+   programming in it's essence.
+2. I want to try something where every logic is semantic, in regarding
+   parsing there is only parenthesis and words.
 
+# Common errors:
+
+* `Dunno what to do with (k ...` when executing a recursive function, you probally forgot to call it using fix.
+
+# Examples
+
+You can check the `test.lispy` file for examples.

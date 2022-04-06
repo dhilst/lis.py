@@ -54,7 +54,7 @@ def _parse(inp_iter, stack=0):
 
     if stack != 0:
         raise ValueError("unbalanced parenthesis")
-    return result
+    return result[0]
 
 
 # easier to call
@@ -95,16 +95,17 @@ def eval_(inp, env):
         # if this is an empty list we do nothing
         if not inp:
             return None
-        elif len(inp) == 1:
-            return eval_(inp[0], env)
         # this is a list, so we take the first argument
         # and evaluate until is not a list anymore
         op, *args = inp
         while type(op) is list:
             op = eval_(op, env)
 
-        if op is None and args:
-            return eval_(args, env)
+        # if op is None:
+        #     if args:
+        #         return eval_(args, env)
+        #     else:
+        #         return None
         # then we call apply, op is our function, args
         # are the arguemnts and env is the environment
         # holding variables stuff
@@ -162,6 +163,12 @@ def apply_(f, args, env):
         # apply the function and evaluate the result
         args = (eval_(arg, env) for arg in args)
         return eval_(apply_(env[f], args, env), env)
+    elif f == "ignore":
+        return None
+    elif f == "prog":
+        for arg in args[:-1]:
+            eval_(arg, env)
+        return eval_(args[-1], env)
     elif type(f) is str and f.endswith("!") and f in global_env:
         # a global macro, we treat ! specially here, just
         # call the macro passing the environment as last argument
@@ -179,12 +186,14 @@ def apply_(f, args, env):
         return f(*args)
     else:
         # Don't know what to do
-        raise RuntimeError(f"Dunno what to do with ({f} {args}) env = {env}")
+        raise RuntimeError(f"Dunno what to do with ({f} {args}) env keys = {list(env.keys())}")
 
 
 # Gets an AST (a nested list) and return a string of that AST
 def unparse(inp):
     if type(inp) is list:
+        if not inp: # empty list
+            return "()"
         s = StringIO()
         s.write("(")
         for arg in inp[:-1]:
@@ -210,8 +219,8 @@ def unparse(inp):
 #
 # For example, this returns 120
 # (fix (lambda (x k) (if (= x 0) 1 (* x (k (- x 1) k)))) 5)
-def fix(f, arg):
-    return apply_(f, [arg, f], {})
+def fix(f, *arg):
+    return apply_(f, [*arg, f], {})
 
 
 # A macro, I would like to be able to do let user do this
@@ -230,7 +239,6 @@ def let(arg, body, env):
 
 def assert_(x):
     assert x
-
 
 # our global environment, everything here is a constant or a function
 # you can extend the language by adding more globals

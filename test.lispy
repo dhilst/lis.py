@@ -1,0 +1,32 @@
+(prog
+  (define inc (lambda (x) (+ 1 x)))
+
+  (assert (= (inc 1) 2))
+
+  (define list-nil (lambda () (lambda (cons nil'') (nil''))))
+  (define list-cons (lambda (cons nil') (lambda (cons' nil'') (cons' cons nil'))))
+
+  (define l (list-cons 1 (list-cons 2 (list-cons 3 (list-nil)))))
+
+  (define list-fold
+     (lambda (l f acc k)
+       (let! (empty (lambda () acc))
+       (let! (not-empty (lambda (head tail) (k tail f (f head acc) k)))
+         (l not-empty empty)))))
+
+  (assert (= (l (lambda (head tail) head) (lambda () 0)) 1))
+  (assert (= (fix list-fold l + 0) 6))
+
+  (define x 1)
+  (assert (= ((lambda () x) 100) x))
+
+  (assert (= ((lambda () 100)) 100))
+
+  (ignore Receives a continuation and returns a function
+          that call this continuation with 1)
+  (define f (lambda (k) (lambda () (k 1))))
+  (assert (= ((f inc)) 2))
+
+  (define fact (lambda (x k) (if (= x 0) 1 (* x (k (- x 1) k)))))
+  (assert (= (fix fact 5) 120))
+  )
