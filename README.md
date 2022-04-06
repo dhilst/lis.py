@@ -26,6 +26,7 @@ The basic constructs of the language
 * `= > < >= <= !=` are the boolean copmarisons
 * `! &` bitwise operators
 * `let!`, this is in fact a macro `(let! (x 1) (+ x 1))` expands to `((lambda (x) (+ x 1)) 1)`
+* `(assert x)` : calls `assert x` in Python.
 
 # REPL
 
@@ -34,4 +35,8 @@ If you execute `python3 lis.py`it will start the REPl, you can type the code and
 # Running files
 
 If you redirect the input to `lis.py` it will interpret the whole thing as a single string and execute the code. It will not print intermediary resulst so you may want to use print to see the results.
+
+# Motivation
+
+I want something easy to tweak to pratice lambda calculus, so this is why we don't have anything other data type beside lambdas, you have to use lambdas to construct otherstuff :), this is functional programming in it's essence.
 

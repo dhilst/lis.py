@@ -228,6 +228,10 @@ def let(arg, body, env):
     return eval_(parse(result), env)
 
 
+def assert_(x):
+    assert x
+
+
 # our global environment, everything here is a constant or a function
 # you can extend the language by adding more globals
 global_env = {
@@ -251,6 +255,7 @@ global_env = {
     "fix": fix,
     "let!": let,
     "env": print,
+    "assert": assert_,
 }
 
 
