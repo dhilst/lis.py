@@ -2,6 +2,119 @@
 
 #### THIS IS NOT SCHEME
 
+This is a simple and small implementation of a LISP like
+interpreter for lambda calculus pratice. It has no data
+structures, everything has to be build with lambdas.
+
+## Tutorial
+
+The REPL can be started by executing the `lis.py`file like
+`python lis.py`, it accepts multiple line input and
+readline integration with history etc. You can also type
+the contents in a file and execute it like this
+`python lis.py < file.lispy`. The extension doesn't matter.
+
+About the language, the basic construct is a lambda :
+
+```scheme
+(lambda (x) (+ 1 x))
+```
+
+Since this is a strict language we have `if` too, so
+`not` function is defined like this :
+
+```scheme
+(lambda (x) (if x false true))
+```
+
+As you can see we have booleans, the basic values are
+booleans, keywords (like `:foo`) and integers like `1234`.
+
+Keywords behave like constants, you can use then when
+you need to test something for equality. And we have `nil`
+to represent absence of values.
+
+```scheme
+(= :foo :foo) ;; prints True in REPL
+```
+
+You can define global symbols with `define`
+
+```scheme
+(define not (lambda (x) (if x false true)))
+```
+
+And `let!` to define local variables
+
+```scheme
+(let! (x 1)
+  (+ x x)) ;; x = 1 here
+```
+
+Also we have print, print returns `nil`.
+
+```scheme
+(print :hello-world)
+```
+
+And the arithmetic, boolean and bitwise operators, in that order :
+`+`, `*`, `/`, `%`, `=`, `!=`, `>`, `<`, `>=` `<=`, `&`, `|`:
+
+The `even?` function can be defined like this
+
+```
+(define even? (lambda (x) (= (% x 2) 0)))
+```
+
+We have `prog` that make the role of a block, it evaluates all its
+arguments and return the result of the last one.
+
+A trace function, that print and return it's input
+can be defined like this
+
+```scheme
+(define trace (lambda (x)
+	(prog
+		(print x)
+		x)))
+```
+
+We have `fix` to call anonymous functions recursively, so we
+can call anonymous factorial like this : 
+
+```scheme
+(fix (lambda (x fact) (if (= x 0) 1 (* x (fact (- x 1) fact)))) 5)
+```
+
+The above example will print `120` on REPL. `fix` will receive a
+function and call it passing itself as the last argument. Note that
+normal recursion also works :
+
+```scheme
+(define fact (lambda (x)
+	(if (= x 0)
+		1
+		(* x (fact (- x 1))))))
+(fact 5)
+```
+
+Comments are done with `;` and span up to the end of the line.
+
+```scheme
+; this is a comment
+```
+
+And we have `assert` which is basically calls `assert` in Python
+
+```scheme
+(assert (= 1 1)) ;; print nothing, return nil
+(assert false) ;; abort with AssertionError
+```
+
+Thats it, congratulations you learned _lis.py_! Check out
+`test.lispy` for more examples.
+
+
 ## Constructs
 
 The basic constructs of the language
@@ -19,7 +132,7 @@ The basic constructs of the language
 * `true`is `True` and `false` is `False`
 * Integers are integers, no floats, sorry
 * Symbol starting with `:` are called keywords and they evaluate to
-  them selfs. You can think of it as constants
+  themselves. You can think of it as constants
 * We have no strings
 
 ## Global functions
@@ -27,10 +140,9 @@ The basic constructs of the language
 * `print`, prints its argument, returns  `nil`
 * `+ - * / %` are the arithemetic operations, pay attention that `/` is `//` in python or flordiv. Also, these functions that two arguments, calling with three or more will give you an error
 * `= > < >= <= !=` are the boolean copmarisons
-* `! &` bitwise operators
+* `| &` bitwise operators
 * `let!`, this is in fact a macro `(let! (x 1) (+ x 1))` expands to `((lambda (x) (+ x 1)) 1)`
 * `(assert x)` : calls `assert x` in Python.
-* `(ignore *args)` : Returns `nil` and don't evaluate the arguments. Use it for commenting code.
 * `(prog *args)` : Evaluate all the arguments and return the last one. Note that `((foo x) (bar y))` means _Execute `(foo x)`, then apply it's result to `(bar y)`_. If you need _Execute `(foo x)`, ignore it's result and then execute `(bar y)`_ then you need to write `(prog (foo x) (bar y))`.
 
 # REPL
