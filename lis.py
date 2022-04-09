@@ -27,7 +27,15 @@ def tokenize(inp: str) -> Iterator[str]:
             i += 1
         return s.getvalue()
 
+    def skip_comment():
+        nonlocal i
+        assert cur() == ";"
+        while cur() != "\n":
+            i += 1
+
     while not empty():
+        if cur() == ";":
+            skip_comment()
         if cur().isspace():
             i += 1
         elif cur() in "()":

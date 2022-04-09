@@ -11,13 +11,16 @@ The basic constructs of the language
 * `(fix (lambda (x k) (if (= x 0) x (k (- x 0)))) 2)`: `fix` for recursion, `fix` will take a lambda and call it passing it as the last argument. The `k`stand for continuation, is pretty common for use _k_ for continuation in the literature.
 * `(define inc (lambda (x) (+ x 1)))`: `define` defines a symbol
 * `env` returns the current environment, this is used for debugging as the object returned is a dict and _lispy_ has no means to work with Python dicts
+* `; comment to the end of line` : use `;` for comments
 
 ## Constants and values
 
 * `nil`is `None`
 * `true`is `True` and `false` is `False`
-* integers are integers, no floats, sorry
-* we have no strings and no symbols so far
+* Integers are integers, no floats, sorry
+* Symbol starting with `:` are called keywords and they evaluate to
+  them selfs. You can think of it as constants
+* We have no strings
 
 ## Global functions
 
