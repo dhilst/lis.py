@@ -61,7 +61,7 @@
  (let! (m (map.empty))
  (let! (m (map.add :foo 1 m))
  (let! (m (map.add :bar 2 m))
-    (= (+ (m :foo) (m :bar)) 3))))
+    (assert (= (+ (m :foo) (m :bar)) 3)))))
 
 
  ;; monads are encoded as a pair e, with bind as fst and return as
