@@ -3,11 +3,11 @@ import os
 import re
 import readline as rl
 import atexit
-from copy import deepcopy
+from copy import deepcopy, copy
 from typing import *
 from collections import namedtuple
 import operator
-from functools import reduce
+from functools import reduce, lru_cache
 import sys
 
 # Get a string and yields tokens. There are
@@ -139,7 +139,7 @@ def apply_(f, args, env):
         # (lambda (args) body)
         # construct a closure
         args, body = args
-        return closure(args, body, deepcopy(env))
+        return closure(args, body, env)
     elif f == "define":
         sym, value = args
         env[sym] = eval_(value, env)
@@ -155,7 +155,7 @@ def apply_(f, args, env):
         args_pairs = zip(f.args, args)
 
         # copy the environment, we pretend we're not using mutation
-        newenv = deepcopy(env)
+        newenv = copy(env)
         # update the environment with the closure environment
         newenv.update(f.env)
         # update the environment with the arguments, values pairs
@@ -329,7 +329,6 @@ def main():
         return repl()
     else:
         return run(sys.stdin.read(), {})
-
 
 if __name__ == "__main__":
     main()
