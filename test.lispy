@@ -1,14 +1,15 @@
 ;; -*- mode: scheme -*- 
 (prog
  (define id (lambda (x) x))
- (define inc (lambda (x) (+ 1 x)))
+ (define succ (lambda (x) (+ 1 x)))
  (define pred (lambda (x) (- 1 x)))
  (define const (lambda (x) (lambda () x)))
  (define compose (lambda (f g) (lambda (x) (f (g x)))))
+ (define not (lambda (x) (if x false true)))
 
  (assert (= (id 1) 1))
- (assert (= (inc 1) 2))
- (assert (= ((compose inc inc) 1) 3))
+ (assert (= (succ 1) 2))
+ (assert (= ((compose succ succ) 1) 3))
  (assert (= ((const 1) 2) 1))
 
  ;; List Scott encoding
@@ -31,7 +32,7 @@
  (assert (= ((lambda () x) 100) x))
  (assert (= ((lambda () 100)) 100)) ;; IFFE
  (define f (lambda (k) (lambda () (k 1))))
- (assert (= ((f inc)) 2))
+ (assert (= ((f succ)) 2))
 
  ;; Factorial with fix
  (define fact (lambda (x k) (if (= x 0) 1 (* x (k (- x 1) k)))))
@@ -76,14 +77,24 @@
  (define opt.bind (lambda (m f) (m f opt.nothing)))
  (define opt.return opt.some)
  (define opt.monad (pair opt.bind opt.return))
- (define opt.inc (compose opt.return inc))
+ (define opt.succ (compose opt.return succ))
+ (define opt.pred (lambda (x)
+		   (if (> x 0)
+		       (opt.return (pred x))
+		       opt.nothing)))
+ (define opt.some? (lambda (m) (m (const true) false)))
+ (define opt.nothing? (compose not opt.some?))
 
  (assert (= ((opt.some 1) (const :is_some) :is_nothing) :is_some))
  (assert (= (opt.nothing (const :is_some) :is_nothing) :is_nothing))
  (assert (= ((opt.return 1) (const :is_some) :is_nothing) :is_some))
- (assert (= ((opt.some 1) inc :is_nothing) 2))
- (assert (= ((opt.bind (opt.some 1) opt.inc) id 0) 2))
- (assert (= ((opt.bind opt.nothing opt.inc) id 0) 0))
+ (assert (= ((opt.some 1) succ :is_nothing) 2))
+ (assert (= ((opt.bind (opt.some 1) opt.succ) id 0) 2))
+ (assert (= ((opt.bind opt.nothing opt.succ) id 0) 0))
+ (assert (= ((opt.bind (opt.some 1) opt.pred) id :negative) 0))
+ (assert (= ((opt.bind (opt.some 0) opt.pred) id :negative) :negative))
+ (assert (opt.some? (opt.some 1)))
+ (assert (opt.nothing? opt.nothing))
 
  ;; Lets try lists WIP
  (define list.nil (lambda (c z) z))
