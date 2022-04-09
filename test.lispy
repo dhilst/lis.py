@@ -52,7 +52,7 @@
 	(assert (= (snd p) :b))))
 
  ;; Maps
- (define map.empty (lambda (k v m) nil))
+ (define map.empty (lambda (k v m) (lambda () nil)))
  (define map.add (lambda (k v m)
 		   (lambda (k')
 		     (if (= k k')
@@ -61,7 +61,11 @@
  (let! (m (map.empty))
  (let! (m (map.add :foo 1 m))
  (let! (m (map.add :bar 2 m))
-    (assert (= (+ (m :foo) (m :bar)) 3)))))
+    (prog
+     (assert (= (+ (m :foo) (m :bar)) 3))
+     (assert (= (m :tar) nil))
+    ))))
+ 
 
 
  ;; monads are encoded as a pair e, with bind as fst and return as
