@@ -69,11 +69,35 @@ def _parse(inp_iter, stack=0):
 def parse(inp):
     return _parse(tokenize(inp))
 
+# Gets an AST (a nested list) and return a string of that AST
+def unparse(inp):
+    if type(inp) is list:
+        if not inp: # empty list
+            return "()"
+        s = StringIO()
+        s.write("(")
+        for arg in inp[:-1]:
+            s.write(unparse(arg) + " ")
+        s.write(f"{unparse(inp[-1])})")
+        return s.getvalue()
+    elif callable(inp):
+        return inp.__name__
+    elif type(inp) is closure:
+        args = " ".join(inp.args)
+        body = unparse(inp.body)
+        return f"(lambda ({args}) {body})"
+    else:
+        return str(inp)
+
+
 
 # When we see a (lambda (x) y) we generate a
 # closure(x, y, env) where env is a copy
 # of the current environment
 closure = namedtuple("closure", "args body env")
+setattr(closure, '__repr__', unparse)
+
+
 
 # evaluates a expression, here inp is a
 # nested list of strings already, env is a dict
@@ -193,27 +217,6 @@ def apply_(f, args, env):
     else:
         # Don't know what to do
         raise RuntimeError(f"Dunno what to do with ({f} {args}) env keys = {list(env.keys())}")
-
-
-# Gets an AST (a nested list) and return a string of that AST
-def unparse(inp):
-    if type(inp) is list:
-        if not inp: # empty list
-            return "()"
-        s = StringIO()
-        s.write("(")
-        for arg in inp[:-1]:
-            s.write(unparse(arg) + " ")
-        s.write(f"{unparse(inp[-1])})")
-        return s.getvalue()
-    elif callable(inp):
-        return inp.__name__
-    elif type(inp) is closure:
-        args = " ".join(inp.args)
-        body = unparse(inp.body)
-        return f"(lambda ({args}) {body})"
-    else:
-        return str(inp)
 
 
 # fix operator, with this is possible to use recursion
