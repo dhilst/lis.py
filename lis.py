@@ -71,6 +71,9 @@ closure = namedtuple("closure", "args body env")
 # nested list of strings already, env is a dict
 def eval_(inp, env):
     if type(inp) is str:
+        if inp.startswith(":"):
+            # this is a keyword, return as it is
+            return inp
         if inp == "env":
             return env
         try:

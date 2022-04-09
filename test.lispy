@@ -29,4 +29,7 @@
 
   (define fact (lambda (x k) (if (= x 0) 1 (* x (k (- x 1) k)))))
   (assert (= (fix fact 5) 120))
+
+  (define x :y)
+  (assert (= x :y))
   )
