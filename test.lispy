@@ -12,6 +12,12 @@
  (assert (= ((compose succ succ) 1) 3))
  (assert (= ((const 1) 2) 1))
 
+ ;; Arith is not being take in account, any function can
+ ;; be called with any number of arguments, this is more
+ ;; an implementation detail (or a bug) than something
+ ;; intentional
+ (assert (= ((lambda () :foo) 1 2 3 4 5) :foo))
+
  ;; List Scott encoding
  (define list-nil (lambda () (lambda (cons nil'') (nil''))))
  (define list-cons (lambda (cons nil') (lambda (cons' nil'') (cons' cons nil'))))
