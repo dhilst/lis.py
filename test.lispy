@@ -1,35 +1,98 @@
 ;; -*- mode: scheme -*- 
 (prog
-  (define inc (lambda (x) (+ 1 x)))
+ (define id (lambda (x) x))
+ (define inc (lambda (x) (+ 1 x)))
+ (define pred (lambda (x) (- 1 x)))
+ (define const (lambda (x) (lambda () x)))
+ (define compose (lambda (f g) (lambda (x) (f (g x)))))
 
-  (assert (= (inc 1) 2))
+ (assert (= (id 1) 1))
+ (assert (= (inc 1) 2))
+ (assert (= ((compose inc inc) 1) 3))
+ (assert (= ((const 1) 2) 1))
 
-  (define list-nil (lambda () (lambda (cons nil'') (nil''))))
-  (define list-cons (lambda (cons nil') (lambda (cons' nil'') (cons' cons nil'))))
+ ;; List Scott encoding
+ (define list-nil (lambda () (lambda (cons nil'') (nil''))))
+ (define list-cons (lambda (cons nil') (lambda (cons' nil'') (cons' cons nil'))))
 
-  (define l (list-cons 1 (list-cons 2 (list-cons 3 (list-nil)))))
+ (define l (list-cons 1 (list-cons 2 (list-cons 3 (list-nil)))))
 
-  (define list-fold
-     (lambda (l f acc k)
-       (let! (empty (lambda () acc))
-       (let! (not-empty (lambda (head tail) (k tail f (f head acc) k)))
-         (l not-empty empty)))))
+ (define list-fold
+   (lambda (l f acc k)
+     (let! (empty (lambda () acc))
+	   (let! (not-empty (lambda (head tail) (k tail f (f head acc) k)))
+		 (l not-empty empty)))))
 
-  (assert (= (l (lambda (head tail) head) (lambda () 0)) 1))
-  (assert (= (fix list-fold l + 0) 6))
+ (assert (= (l (lambda (head tail) head) (lambda () 0)) 1))
+ (assert (= (fix list-fold l + 0) 6))
 
-  (define x 1)
-  (assert (= ((lambda () x) 100) x))
+ ;; Testing closure capturing
+ (define x 1)
+ (assert (= ((lambda () x) 100) x))
+ (assert (= ((lambda () 100)) 100)) ;; IFFE
+ (define f (lambda (k) (lambda () (k 1))))
+ (assert (= ((f inc)) 2))
 
-  (assert (= ((lambda () 100)) 100))
+ ;; Factorial with fix
+ (define fact (lambda (x k) (if (= x 0) 1 (* x (k (- x 1) k)))))
+ (assert (= (fix fact 5) 120))
 
-  (ignore Receives a continuation and returns a function
-          that call this continuation with 1)
-  (define f (lambda (k) (lambda () (k 1))))
-  (assert (= ((f inc)) 2))
+ ;; Factorial without fix
+ (define fact' (lambda (x) (if (= x 0) 1 (* x (fact' (- x 1))))))
+ (assert (= (fact' 5) 120))
 
-  (define fact (lambda (x k) (if (= x 0) 1 (* x (k (- x 1) k)))))
-  (assert (= (fix fact 5) 120))
+ ;; Pairs
+ (define pair (lambda (a b) (lambda (f) (f a b))))
+ (define fst (lambda (p) (p (lambda (a b) a))))
+ (define snd (lambda (p) (p (lambda (a b) b))))
+ (let! (p (pair :a :b))
+       (prog
+	(assert (= (fst p) :a))
+	(assert (= (snd p) :b))))
+
+ ;; Maps
+ (define map.empty (lambda (k v m) nil))
+ (define map.add (lambda (k v m)
+		   (lambda (k')
+		     (if (= k k')
+			 v
+			 (m k')))))
+ (let! (m (map.empty))
+ (let! (m (map.add :foo 1 m))
+ (let! (m (map.add :bar 2 m))
+    (= (+ (m :foo) (m :bar)) 3))))
 
 
-  )
+ ;; monads are encoded as a pair e, with bind as fst and return as
+ ;; snd e stands for evidence
+ ;; borrowed from https://stackoverflow.com/a/8936209/652528
+
+ (define bind (lambda (e) (fst e)))
+ (define return (lambda (e) (snd e)))
+
+ ;; option monad
+ (define opt.some (lambda (x) (lambda (f z) (f x))))
+ (define opt.nothing (lambda (f z) z))
+ (define opt.bind (lambda (m f) (m f opt.nothing)))
+ (define opt.return opt.some)
+ (define opt.monad (pair opt.bind opt.return))
+ (define opt.inc (compose opt.return inc))
+
+ (assert (= ((opt.some 1) (const :is_some) :is_nothing) :is_some))
+ (assert (= (opt.nothing (const :is_some) :is_nothing) :is_nothing))
+ (assert (= ((opt.return 1) (const :is_some) :is_nothing) :is_some))
+ (assert (= ((opt.some 1) inc :is_nothing) 2))
+ (assert (= ((opt.bind (opt.some 1) opt.inc) id 0) 2))
+ (assert (= ((opt.bind opt.nothing opt.inc) id 0) 0))
+
+ ;; Lets try lists WIP
+ (define list.nil (lambda (c z) z))
+ (define list.cons (lambda (h t c z) (c h (t c z))))
+ (define list.bind (lambda (m f) (list.concat (list.map f m))))
+ (define list.return (lambda (x) (list.cons x list.nil)))
+ (define list.monad (pair list.bind list.return))
+ (define list.concat (lambda (l) (l list.append list.nil)))
+ (define list.append (lambda (x y) (x list.cons y)))
+
+ )
+
