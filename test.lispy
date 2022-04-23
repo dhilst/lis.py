@@ -46,8 +46,6 @@
  (assert (= (implies false true) true))
  (assert (= (implies false false) true))
  ;; setup an alias
- (define -> implies)
- (assert (= (-> true true) true))
 
  ;; xor macro
  (define-macro xor (a b) (if a (not b) b))
@@ -55,6 +53,22 @@
  (assert (= (xor true false) true))
  (assert (= (xor false true) true))
  (assert (= (xor false false) false))
+
+ ;; We can absue the substitution mechanism and define
+ ;; let like this
+ (define-macro letin (x = e1 in e2)
+   ((lambda (x) e2) e1))
+ (assert (= (letin x = 1 in (+ x x)) 2))
+
+ ;; infix macro
+ (define-macro infix (a f b) (f a b))
+ (assert (= (infix 1 + 2) 3))
+
+ (define -> implies)
+ (assert (= (infix true  -> true)  true))
+ (assert (= (infix true  -> false) false))
+ (assert (= (infix false -> true)  true))
+ (assert (= (infix false -> false) true))
 
  ;; List Scott encoding
  (define list-nil (lambda () (lambda (cons nil'') (nil''))))
