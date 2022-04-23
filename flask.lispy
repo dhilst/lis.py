@@ -1,0 +1,23 @@
+;; -*- mode: scheme -*- 
+;; This was not intented but I want to see how
+;; dificult would be to call real python code
+
+;; (string A B .. C) evaluate to  " ".join([A, B, .., C])
+;; (. obj A B) evaluate to obj.A.B. (accept variadic arguments)
+;; (define-pyfun NAME (ARGS) BODY) define a callable in python,
+;;   I need that because closures (in lis.py) are not callables
+;;   from python perspective.
+;;
+;; I also added globals() and __builtins__ to the apply function, so
+;; (FOO ...) will fallback to globals() and then __builtins__ if
+;; everything else fails
+
+(prog
+ (define flask (__import__ flask))
+ (define app ((. flask Flask) :hello))
+ (define-pyfun endpoint ()
+   (string hello world))
+ (((. app route) (string /)) endpoint)
+ ((. app run)))
+
+    
