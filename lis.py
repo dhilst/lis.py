@@ -149,6 +149,8 @@ def eval_(inp, env):
         # True, False, None, and closures
         return inp
 
+def strict_args(args, env):
+    return (eval_(arg, env) for arg in args)
 
 # apply a function to argumnts
 def apply_(f, args, env):
@@ -236,11 +238,48 @@ def apply_(f, args, env):
         # call they
         args = (eval_(arg, env) for arg in args)
         return f(*args)
+    elif f == "load":
+        assert len(args) == 1, f"load expect 1 argument, received {len(args)}"
+        fil = args[0]
+        with open(fil) as filp:
+            data = filp.read()
+        return run(data, env)
+    elif f == "string":
+        return " ".join(args)
+    elif f == ".":
+        assert len(args) >= 2
+        obj, *fields = args
+        result = getattr(env[obj], fields[0])
+        for field in fields[1:]:
+            result = getattr(result, field)
+        return result
+    elif f == "define-pyfun":
+        class Callable:
+            def __init__(self, name, args, body, env):
+                self.args = args
+                self.body = body
+                self.env = env
+                self.name = name
+                self.__name__ = name
+            def __call__(self, *args):
+                args = (eval_(arg, self.env) for arg in args)
+                args_pairs = zip(self.args, args)
+                newenv = copy(self.env)
+                newenv.update(args_pairs)
+                return eval_(self.body, newenv)
+
+        assert len(args) == 3
+        name, args, body = args
+        env[name] = Callable(name, args, body, env)
+        return None
+    elif f in globals() and callable(globals()[f]):
+        return globals()[f](*args)
+    elif f in __builtins__.__dict__ and callable(__builtins__.__dict__[f]):
+        return __builtins__.__dict__[f](*args)
     else:
         # Don't know what to do
-        raise RuntimeError(
-            f"Dunno what to do with ({f} {args}) env keys = {list(env.keys())}"
-        )
+        assert False, f"Dunno what to do with ({f} {args}) env keys = {list(env.keys())}"
+
 
 # fix operator, with this is possible to use recursion
 # with anonymous functions. your function need to take
