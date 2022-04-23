@@ -108,7 +108,7 @@ for more examples.
 
 We have macros, here how to define a `let` macro
 
-```
+```scheme
 (define-macro let (x e1 e2) ((lambda (x) e2) e1))
 
 (let x 1 (+ 1 x)) ;; prints 2
