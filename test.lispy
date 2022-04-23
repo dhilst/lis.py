@@ -18,18 +18,55 @@
  ;; intentional
  (assert (= ((lambda () :foo) 1 2 3 4 5) :foo))
 
+ ;; Let macro
+ (define-macro let (x e1 e2)
+   ((lambda (x) e2) e1))
+
+ (assert (= (let x 1 (+ x x)) 2))
+ (assert (= (let f (lambda (y) (* y 3)) (f 4)) 12))
+
+ ;; and macro
+ (define-macro and (a b) (if a b false))
+ (assert (= (and true true) true))
+ (assert (= (and true false) false))
+ (assert (= (and false true) false))
+ (assert (= (and false false) false))
+
+ ;; or macro
+ (define-macro or (a b) (if a true b))
+ (assert (= (or true true) true))
+ (assert (= (or true false) true))
+ (assert (= (or false true) true))
+ (assert (= (or false false) false))
+
+ ;; implies macro
+ (define-macro implies (a b) (if a b true))
+ (assert (= (implies true true) true))
+ (assert (= (implies true false) false))
+ (assert (= (implies false true) true))
+ (assert (= (implies false false) true))
+ ;; setup an alias
+ (define -> implies)
+ (assert (= (-> true true) true))
+
+ ;; xor macro
+ (define-macro xor (a b) (if a (not b) b))
+ (assert (= (xor true true) false))
+ (assert (= (xor true false) true))
+ (assert (= (xor false true) true))
+ (assert (= (xor false false) false))
 
  ;; List Scott encoding
  (define list-nil (lambda () (lambda (cons nil'') (nil''))))
  (define list-cons (lambda (cons nil') (lambda (cons' nil'') (cons' cons nil'))))
 
  (define l (list-cons 1 (list-cons 2 (list-cons 3 (list-nil)))))
- (define-macro let (x e1 e2) ((lambda (x) e2) e1))
 
  (define list-fold
     (lambda (l f acc k)
       (let empty (lambda () acc)
-      (let not-empty (lambda (head tail) (k tail f (f head acc) k))
+      (let not-empty 
+          (lambda (head tail) (k tail f (f head acc) k))
         (l not-empty empty)))))
 
  (assert (= (l (lambda (head tail) head) (lambda () 0)) 1))
