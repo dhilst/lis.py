@@ -97,6 +97,9 @@ def unparse(inp):
 closure = namedtuple("closure", "args body env")
 setattr(closure, '__repr__', unparse)
 
+# When we see (defmacro N (A) B) we build
+# a macro with args = A and body = B
+macro = namedtuple("macro", "args body")
 
 
 # evaluates a expression, here inp is a
@@ -168,6 +171,11 @@ def apply_(f, args, env):
         sym, value = args
         env[sym] = eval_(value, env)
         return None
+    elif f == "define-macro":
+        assert len(args) == 3
+        sym, args, body = args
+        env[sym] = macro(args, body)
+        return None
     elif type(f) is closure:
         # (<closure> args) ; <closure> is an evaluated (lambda (args) body)
         # okay this is a closure, here is how to call it
@@ -186,7 +194,25 @@ def apply_(f, args, env):
         newenv.update(args_pairs)
         # evaluate the body with our new environment
         return eval_(f.body, newenv)
-    elif type(f) is str and f in env:
+    elif type(f) is str and f in env and type(env[f]) is macro:
+        m = env[f]
+        assert len(m.args) == len(args), f"Expect {len(m.args)} found {len(args)}"
+        args_dict = dict(zip(m.args, args))
+
+        def replace(mbody, arg_pairs):
+            if type(mbody) is str:
+                if mbody in args_dict:
+                    return args_dict[mbody]
+                else:
+                    return mbody
+            elif type(mbody) is list:
+                return [replace(e, args_dict) for e in mbody]
+            else:
+                assert False, f"Invalid body type {mbody}"
+
+        body = replace(m.body, args_dict)
+        return eval_(body, env)
+    elif type(f) is str and f in env and type(env[f]) is not macro:
         # (f args) ; but f is a user defined function
         # this is function in the environment
         # evaluate the arguments (strict evaluation),
@@ -199,10 +225,6 @@ def apply_(f, args, env):
         for arg in args[:-1]:
             eval_(arg, env)
         return eval_(args[-1], env)
-    elif type(f) is str and f.endswith("!") and f in global_env:
-        # a global macro, we treat ! specially here, just
-        # call the macro passing the environment as last argument
-        return eval_(global_env[f](*args, env), env)
     elif type(f) is str and f in global_env:
         # (g args) ; but g is a global defined function
         # the same as above but g is a global, like print
@@ -216,8 +238,9 @@ def apply_(f, args, env):
         return f(*args)
     else:
         # Don't know what to do
-        raise RuntimeError(f"Dunno what to do with ({f} {args}) env keys = {list(env.keys())}")
-
+        raise RuntimeError(
+            f"Dunno what to do with ({f} {args}) env keys = {list(env.keys())}"
+        )
 
 # fix operator, with this is possible to use recursion
 # with anonymous functions. your function need to take
@@ -232,22 +255,9 @@ def fix(f, *arg):
     return apply_(f, [*arg, f], {})
 
 
-# A macro, I would like to be able to do let user do this
-# but I have to change eval and apply functions to accommodate
-# quoting.
-#
-# (let! (v arg) body) compiles to ((lambda (v) body) arg)
-def let(arg, body, env):
-    arg, v = arg
-    v = unparse(v)
-    arg = unparse(arg)
-    body = unparse(body)
-    result = f"((lambda ({arg}) {body}) {v})"
-    return eval_(parse(result), env)
-
-
 def assert_(x):
     assert x
+
 
 # our global environment, everything here is a constant or a function
 # you can extend the language by adding more globals
@@ -270,7 +280,6 @@ global_env = {
     "&": operator.and_,
     "|": operator.or_,
     "fix": fix,
-    "let!": let,
     "env": print,
     "assert": assert_,
 }
@@ -279,6 +288,7 @@ global_env = {
 #  easier to call
 def run(inp: str, env):
     return eval_(parse(inp), env)
+
 
 # The REPL
 def repl():
@@ -326,6 +336,7 @@ def repl():
         except KeyboardInterrupt:
             print("Keyboard interrupt, exiting")
             return
+
 
 def main():
     if sys.stdin.isatty():

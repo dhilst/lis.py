@@ -18,17 +18,19 @@
  ;; intentional
  (assert (= ((lambda () :foo) 1 2 3 4 5) :foo))
 
+
  ;; List Scott encoding
  (define list-nil (lambda () (lambda (cons nil'') (nil''))))
  (define list-cons (lambda (cons nil') (lambda (cons' nil'') (cons' cons nil'))))
 
  (define l (list-cons 1 (list-cons 2 (list-cons 3 (list-nil)))))
+ (define-macro let (x e1 e2) ((lambda (x) e2) e1))
 
  (define list-fold
-   (lambda (l f acc k)
-     (let! (empty (lambda () acc))
-	   (let! (not-empty (lambda (head tail) (k tail f (f head acc) k)))
-		 (l not-empty empty)))))
+    (lambda (l f acc k)
+      (let empty (lambda () acc)
+      (let not-empty (lambda (head tail) (k tail f (f head acc) k))
+        (l not-empty empty)))))
 
  (assert (= (l (lambda (head tail) head) (lambda () 0)) 1))
  (assert (= (fix list-fold l + 0) 6))
@@ -52,10 +54,10 @@
  (define pair (lambda (a b) (lambda (f) (f a b))))
  (define fst (lambda (p) (p (lambda (a b) a))))
  (define snd (lambda (p) (p (lambda (a b) b))))
- (let! (p (pair :a :b))
-       (prog
-	(assert (= (fst p) :a))
-	(assert (= (snd p) :b))))
+ (let p (pair :a :b)
+   (prog
+    (assert (= (fst p) :a))
+    (assert (= (snd p) :b))))
 
  ;; Maps
  (define map.empty (lambda (k v m) (lambda () nil)))
@@ -64,9 +66,9 @@
 		     (if (= k k')
 			 v
 			 (m k')))))
- (let! (m (map.empty))
- (let! (m (map.add :foo 1 m))
- (let! (m (map.add :bar 2 m))
+ (let m (map.empty)
+ (let m (map.add :foo 1 m)
+ (let m (map.add :bar 2 m)
     (prog
      (assert (= (+ (m :foo) (m :bar)) 3))
      (assert (= (m :tar) nil))
